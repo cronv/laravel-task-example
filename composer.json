@@ -1,0 +1,44 @@
+{
+  "name": "cronv/laravel-task-example",
+  "description": "Laravel package for JSON-RPC routing with unit tests, seeders, factories, migrations, and models.",
+  "keywords": ["microservice", "example"],
+  "license": "MIT",
+  "type": "library",
+  "require": {
+    "php": "^7.4|^8.0",
+    "laravel/framework": "^8",
+    "sajya/server": "^4.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "cronv\\LaravelTaskExample\\": "src/",
+      "cronv\\LaravelTaskExample\\Database\\Factories\\": "database/factories/",
+      "cronv\\LaravelTaskExample\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "cronv\\LaravelTaskExample\\Tests\\": "tests/"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require-dev": {
+    "phpunit/phpunit": "^8.0",
+    "fakerphp/faker": "^1.9",
+    "mockery/mockery": "^1.4"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "lint": [
+      "@composer cs-fix -- --test"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "cronv\\LaravelTaskExample\\LaravelTaskExampleServiceProvider"
+      ]
+    }
+  }
+}

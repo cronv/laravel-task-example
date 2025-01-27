@@ -1,0 +1,13 @@
+### Запрос на получение заказов с лимитом
+
+POST http://test.job.localhost/rpc/orders
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "method": "order@get",
+  "params": {
+    "limit": 50
+  },
+  "id": 1
+}

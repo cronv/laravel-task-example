@@ -1,0 +1,102 @@
+name: CI for Laravel Package
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DB_NAME: laravel_test
+  DB_PASS: password
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: ${{ env.DB_NAME }}
+          MYSQL_ROOT_PASSWORD: ${{ env.DB_PASS }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xml, bcmath, mysqli
+
+      - name: Install Laravel Installer
+        run: composer global require "laravel/installer"
+
+      - name: Create a new Laravel project
+        run: |
+          composer create-project --prefer-dist laravel/laravel test-project
+          cd test-project
+          # Add the repository and require the package
+          composer config repositories.cronv vcs https://github.com/${{ github.repository }}.git
+
+      - name: Set up environment for Laravel project
+        run: |
+          cd test-project
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=${{ env.DB_NAME }}" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=${{ env.DB_PASS }}" >> .env
+          cp .env .env.testing
+
+      - name: Wait for MySQL to be ready
+        run: |
+          while ! mysqladmin ping -h"127.0.0.1" --silent; do
+            echo "Waiting for MySQL..."
+            sleep 5
+          done
+
+      - name: Install dependencies
+        run: |
+          cd test-project
+          composer install
+
+      - name: Require the Package
+        run: |
+          cd test-project
+          composer require "cronv/laravel-task-example:dev-main"
+
+      - name: Dump Autoload
+        run: |
+          cd test-project
+          composer dump-autoload
+
+      - name: List Composer Packages
+        run: |
+          cd test-project
+          composer show
+
+      - name: Run migrations
+        run: |
+          cd test-project
+          php artisan migrate --path=vendor/cronv/laravel-task-example/database/migrations --env=testing
+
+      - name: Seed database
+        run: |
+          cd test-project
+          php artisan db:seed --class="cronv\LaravelTaskExample\Database\Seeders\DatabaseSeeder" --env=testing
+
+      - name: Run package tests
+        run: |
+          cd test-project
+          php ./vendor/bin/phpunit ./vendor/cronv/laravel-task-example/tests
